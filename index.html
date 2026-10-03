@@ -3,11 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mi cumple · Marti</title>
+<title>Martina cumple 7 · Invitación</title>
 <meta name="theme-color" content="#ff5fa2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="portada-chicas.png">
+<link rel="preload" as="image" href="martina-portada.png">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lilita+One&family=Rubik+Mono+One&display=swap" rel="stylesheet">
+
+<!--
+  ===================== DÓNDE PONER TUS PNG =====================
+  Guardá cada imagen en la MISMA carpeta que este index.html, con estos nombres exactos.
+  Mientras no estén, la página muestra una caja punteada con el nombre del archivo.
+
+  0. martina-portada.png  -> PORTADA de Martina (primera pantalla al entrar). Foto de ella, fondo transparente.
+  1. portada-chicas.png   -> Pantalla de inicio (antes de tocar el corazón). Las tres juntas.
+  2. chicas-volando.png   -> Las chicas volando. Se usa en 2 lugares:
+                              a) barra superior que avanza al hacer scroll
+                              b) franja del cielo donde cruzan la pantalla volando
+  3. chicas-gif.gif       -> GIF de las chicas (arriba, debajo del título)
+  6. show-decor.png       -> Sección del show de Pata Tin y Pata Tan
+  8. cierre-chicas.png    -> Cierre, al final de la página
+  9. cancion.mp3          -> Canción de fondo (se activa al tocar el corazón; se pausa con el botón)
+ 10. musica-icono.png     -> Imagen del botón de música (abajo a la derecha). Salta mientras suena y queda quieta en pausa
+
+  FOTOS DE MARTINA (galería): foto-marti-1 ... foto-marti-7  (.jpg, .jpeg, .png o .webp)
+  Para más o menos fotos, cambiá PHOTO_COUNT en el script.
+  Todos con fondo transparente (PNG).
+  ================================================================
+-->
 
 <style>
   :root{
@@ -83,26 +107,11 @@
   .cover-girls img{ width:auto; max-width:100%; max-height:31svh; margin:0 auto; }
   .cover-girls.png-slot{ width:auto; max-width:100%; }
   .cover-girls.png-slot.empty{ width:var(--w); }
-  .cover-title{ font-size:clamp(1.8rem,min(12.5vw,8.5svh),4.6rem); display:flex; flex-direction:column; align-items:center; gap:.4em; }
+  .cover-title{ width:calc(100% + 20px); max-width:540px; }
 
-  /* ====== Letras estilo logo de Powerpuff Girls ======
-     Capas: contorno negro (::before) > labio rosa oscuro (::after) > cara con degradé rosa (.face) */
-  .ppg{
-    position:relative; display:block; isolation:isolate; white-space:nowrap; text-transform:uppercase;
-    font-family:'Rubik Mono One','Lilita One',sans-serif; font-weight:400; line-height:1.05; letter-spacing:.02em;
-    transform:skewX(-8deg); padding:0 .1em;
-  }
-  .ppg::before,.ppg::after{ content:attr(data-text); position:absolute; left:0; top:0; width:100%; text-align:center; letter-spacing:inherit; padding:inherit; }
-  .ppg::before{ z-index:0; color:#000; -webkit-text-stroke:.46em #000; text-shadow:0 .14em 0 #000; }
-  .ppg::after{ z-index:1; color:#b3124f; -webkit-text-stroke:.12em #b3124f; text-shadow:0 .09em 0 #b3124f; }
-  .ppg .face{
-    position:relative; z-index:2; display:block; color:transparent;
-    background:
-      linear-gradient(180deg, rgba(255,255,255,.4), rgba(255,255,255,0) 55%),
-      linear-gradient(90deg,#f0679c 0%,#fbb6cf 22%,#f0679c 46%,#fbb6cf 72%,#f0679c 100%);
-    -webkit-background-clip:text; background-clip:text;
-  }
-  .ppg-sm{ font-size:.64em; }
+  /* ====== Letras estilo logo de Powerpuff Girls (SVG: contorno negro redondeado, sin picos) ====== */
+  .ppg-svg{ display:block; width:100%; height:auto; overflow:visible; }
+  .cover-title .ppg-svg{ max-height:22svh; }
   .cover-sub{ font-size:clamp(.88rem,2.4svh,1.05rem); font-weight:600; background:#fff; border:3px solid var(--ink); border-radius:999px; padding:5px 16px; box-shadow:var(--pop-sm); }
   .heart-holder{ line-height:0; }
   .cover-heart{ width:clamp(64px,11svh,104px); height:auto; animation:heartbeat 1.1s ease-in-out infinite; filter:drop-shadow(4px 5px 0 rgba(29,18,51,.35)); }
@@ -114,9 +123,9 @@
 
   /* Corazones concéntricos de la intro de la serie */
   .rings{ position:absolute; inset:0; z-index:0; overflow:hidden; }
-  .rings svg{ position:absolute; left:50%; top:var(--ty,44%); height:auto; will-change:scale; }
+  .rings svg{ position:absolute; left:0; top:0; width:100%; height:100%; }
   #wipe{ position:fixed; inset:0; z-index:200; overflow:hidden; pointer-events:none; }
-  #wipe svg{ position:absolute; height:auto; will-change:scale; }
+  #wipe svg{ position:absolute; left:0; top:0; width:100%; height:100%; }
   .fx-heart{ position:fixed; z-index:300; pointer-events:none; transform:translate(-50%,-50%); }
 
   /* ====== Secciones ====== */
@@ -137,7 +146,7 @@
   .portada-photo .png-slot img{ filter:drop-shadow(5px 8px 0 rgba(29,18,51,.3)); }
   body:not(.locked) .portada-photo{ animation:popIn 1s .15s cubic-bezier(.34,1.56,.64,1) both; }
   @keyframes popIn{ from{ opacity:0; transform:translateY(40px) scale(.6) rotate(-4deg); } to{ opacity:1; transform:none; } }
-  .portada-name{ font-size:clamp(2.2rem,12vw,6rem); line-height:1; margin-top:18px; }
+  .portada-name{ width:min(92vw,560px); margin:18px 0 0; line-height:0; }
   .portada-sub{ margin-top:14px; font-family:'Lilita One',cursive; font-size:clamp(1.4rem,6vw,2rem); background:#fff; border:4px solid var(--ink); border-radius:999px; padding:6px 26px; box-shadow:var(--pop-sm); }
   .scroll-cue{
     position:absolute; z-index:2; bottom:max(16px,env(safe-area-inset-bottom)); left:50%; width:46px; height:46px; margin-left:-23px;
@@ -334,12 +343,28 @@
   <div class="cover-content">
     <!-- PNG 1: portada-chicas.png -->
     <div class="png-slot cover-girls" id="coverGirls">
-      <img src="portada-chicas.png" alt="Las Chicas Superpoderosas">
+      <img src="portada-chicas.png" alt="Las Chicas Superpoderosas" fetchpriority="high">
       <span class="slot-label"><b>portada-chicas.png</b>Las tres juntas (van en el centro de los corazones)</span>
     </div>
-    <div class="cover-title" role="heading" aria-level="2" aria-label="Mis 7 años Martina">
-      <span class="ppg ppg-sm" data-text="MIS 7 AÑOS" aria-hidden="true"><span class="face">MIS 7 AÑOS</span></span>
-      <span class="ppg" data-text="MARTINA" aria-hidden="true"><span class="face">MARTINA</span></span>
+    <div class="cover-title" role="heading" aria-level="2">
+      <svg class="ppg-svg" viewBox="0 0 700 256" role="img" aria-label="Mis 7 años Martina">
+        <defs>
+          <linearGradient id="ppgBand1" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="700" y2="0">
+            <stop offset="0" stop-color="#f0679c"/><stop offset=".22" stop-color="#fbb6cf"/><stop offset=".46" stop-color="#f0679c"/><stop offset=".72" stop-color="#fbb6cf"/><stop offset="1" stop-color="#f0679c"/>
+          </linearGradient>
+          <linearGradient id="ppgShine1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/>
+          </linearGradient>
+          <text id="ppgT1" x="350" y="78" text-anchor="middle" font-size="64" textLength="563" lengthAdjust="spacing">MIS 7 AÑOS</text>
+          <text id="ppgT2" x="350" y="212" text-anchor="middle" font-size="100" textLength="616" lengthAdjust="spacing">MARTINA</text>
+        </defs>
+        <g transform="translate(20 0) skewX(-8)" font-family="'Rubik Mono One','Lilita One',sans-serif" font-weight="400" stroke-linejoin="round" stroke-linecap="round">
+          <g fill="#000" stroke="#000"><use href="#ppgT1" y="9" stroke-width="29"/><use href="#ppgT2" y="14" stroke-width="46"/></g>
+          <g fill="#b3124f" stroke="#b3124f"><use href="#ppgT1" y="6" stroke-width="8"/><use href="#ppgT2" y="9" stroke-width="12"/></g>
+          <use href="#ppgT1" fill="url(#ppgBand1)"/><use href="#ppgT2" fill="url(#ppgBand1)"/>
+          <use href="#ppgT1" fill="url(#ppgShine1)"/><use href="#ppgT2" fill="url(#ppgShine1)"/>
+        </g>
+      </svg>
     </div>
     <div class="cover-sub">¡Las Chicas Superpoderosas te invitan!</div>
     <div class="heart-holder">
@@ -363,7 +388,25 @@
           <span class="slot-label"><b>martina-portada.png</b>Foto de Martina (fondo transparente)</span>
         </div>
       </div>
-      <h1 class="portada-name" aria-label="Martina"><span class="ppg" data-text="MARTINA" aria-hidden="true"><span class="face">MARTINA</span></span></h1>
+      <h1 class="portada-name">
+        <svg class="ppg-svg" viewBox="0 0 700 150" role="img" aria-label="Martina">
+          <defs>
+            <linearGradient id="ppgBand2" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="700" y2="0">
+            <stop offset="0" stop-color="#f0679c"/><stop offset=".22" stop-color="#fbb6cf"/><stop offset=".46" stop-color="#f0679c"/><stop offset=".72" stop-color="#fbb6cf"/><stop offset="1" stop-color="#f0679c"/>
+          </linearGradient>
+          <linearGradient id="ppgShine2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/>
+          </linearGradient>
+            <text id="ppgT3" x="350" y="105" text-anchor="middle" font-size="100" textLength="616" lengthAdjust="spacing">MARTINA</text>
+          </defs>
+          <g transform="translate(12 0) skewX(-8)" font-family="'Rubik Mono One','Lilita One',sans-serif" font-weight="400" stroke-linejoin="round" stroke-linecap="round">
+            <g fill="#000" stroke="#000"><use href="#ppgT3" y="14" stroke-width="46"/></g>
+            <g fill="#b3124f" stroke="#b3124f"><use href="#ppgT3" y="9" stroke-width="12"/></g>
+            <use href="#ppgT3" fill="url(#ppgBand2)"/>
+            <use href="#ppgT3" fill="url(#ppgShine2)"/>
+          </g>
+        </svg>
+      </h1>
       <div class="portada-sub">¡Cumple 7 años!</div>
     </div>
     <a class="scroll-cue" href="#hero" aria-label="Seguir bajando">↓</a>
@@ -546,37 +589,64 @@
     path.setAttribute('d', HEART_PATH); path.setAttribute('fill', color);
     svg.appendChild(path); return svg;
   }
-  // Centra el corazón en su punto con márgenes (así el scale crece desde el centro exacto)
-  function sizeHeart(svg, w){
-    svg.style.width = w + 'px';
-    svg.style.marginLeft = (-w/2) + 'px';
-    svg.style.marginTop = (-(w*33/36)/2) + 'px';
+  // Corazones como paths dentro de UN solo SVG: más liviano y sin cuadrados raros en el celular
+  function heartGroup(cx, cy, color, size){
+    const pos = document.createElementNS(NS,'g');
+    pos.setAttribute('transform', 'translate(' + cx + ' ' + cy + ')');
+    const sc = document.createElementNS(NS,'g');
+    sc.style.transformOrigin = '0 0';
+    const p = document.createElementNS(NS,'path');
+    p.setAttribute('d', HEART_PATH); p.setAttribute('fill', color);
+    p.setAttribute('transform', 'scale(' + (size/36) + ') translate(-16 -14.5)');
+    sc.appendChild(p); pos.appendChild(sc);
+    return { pos, sc };
+  }
+  function newSvg(){
+    const svg = document.createElementNS(NS,'svg');
+    svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
+    return svg;
   }
   // Fondo de corazones concéntricos como la intro de la serie:
-  // salen del centro y se expanden hacia afuera sin parar (cada corazón avanza 3 lugares y se repite sin saltos)
+  // salen del centro y se expanden hacia afuera sin parar
   function buildRings(id){
     const box = document.getElementById(id);
     box.textContent = '';
-    const big = Math.max(innerWidth, innerHeight);
+    const w = box.clientWidth || innerWidth, h = box.clientHeight || innerHeight;
+    let cy = h * 0.46;
+    if(id === 'coverRings'){
+      cy = h * 0.44;
+      const gr = document.getElementById('coverGirls').getBoundingClientRect();
+      if(gr.height > 40) cy = gr.top + gr.height/2;   // centrado detrás de las chicas
+    }
+    const cx = w/2;
+    const svg = newSvg(); box.appendChild(svg);
+    const big = Math.max(w, h);
     const step = big * 0.15;
     const N = Math.ceil(big * 1.9 / step) + 1;
     for(let k=N; k>=-3; k--){
-      const svg = ringHeart(RING_COLORS[((k % 3) + 3) % 3]);
-      sizeHeart(svg, step);
-      svg.style.scale = '0';
-      box.appendChild(svg);
+      const { pos, sc } = heartGroup(cx, cy, RING_COLORS[((k % 3) + 3) % 3], step);
+      svg.appendChild(pos);
       const from = k + 1, to = k + 4;
-      if(reduce){ svg.style.scale = String(Math.max(0, from)); continue; }
+      if(reduce){ sc.style.transform = 'scale(' + Math.max(0, from) + ')'; continue; }
       const frames = from >= 0
-        ? [{ scale:from }, { scale:to }]
-        : [{ scale:0, offset:0 }, { scale:0, offset:-from/3 }, { scale:to, offset:1 }];
-      svg.animate(frames, { duration:3600, iterations:Infinity, easing:'linear' });
+        ? [{ transform:'scale(' + from + ')' }, { transform:'scale(' + to + ')' }]
+        : [{ transform:'scale(0)', offset:0 }, { transform:'scale(0)', offset:-from/3 }, { transform:'scale(' + to + ')', offset:1 }];
+      sc.animate(frames, { duration:3600, iterations:Infinity, easing:'linear' });
     }
   }
   buildRings('coverRings');
-  buildRings('portadaRings');
-  let rt;
-  addEventListener('resize', ()=>{ clearTimeout(rt); rt = setTimeout(()=>{ buildRings('coverRings'); buildRings('portadaRings'); }, 250); });
+  // Cuando carga la imagen de las chicas, se vuelve a centrar el fondo detrás de ellas
+  document.querySelector('#coverGirls img').addEventListener('load', ()=> buildRings('coverRings'));
+  let rt, lastW = innerWidth, lastH = innerHeight;
+  addEventListener('resize', ()=>{
+    clearTimeout(rt);
+    rt = setTimeout(()=>{
+      // La barra del navegador del celular al scrollear cambia un poco el alto: se ignora
+      if(Math.abs(innerWidth - lastW) < 2 && Math.abs(innerHeight - lastH) < 150) return;
+      lastW = innerWidth; lastH = innerHeight;
+      buildRings(opened ? 'portadaRings' : 'coverRings');
+    }, 250);
+  });
   function heartEl(color, size){
     const el = document.createElement('div');
     el.className = 'fx-heart';
@@ -652,6 +722,7 @@
     if(opened) return; opened = true;
     playMusic();   // arranca con el toque del corazón (los navegadores lo exigen)
     const finish = ()=>{
+      buildRings('portadaRings');
       cover.style.display = 'none';
       document.body.classList.remove('locked');
       flybar.classList.add('show');
@@ -672,15 +743,14 @@
     // Corazones concéntricos que crecen desde el corazón tocado y tapan la pantalla
     const wipe = document.createElement('div'); wipe.id = 'wipe';
     document.body.appendChild(wipe);
+    const wsvg = newSvg(); wipe.appendChild(wsvg);
     const far = Math.hypot(Math.max(cx, innerWidth-cx), Math.max(cy, innerHeight-cy));
     const maxW = far * 4.4, N = 6;
     for(let k=0;k<N;k++){
-      const svg = ringHeart(RING_COLORS[k % RING_COLORS.length]);
-      svg.style.left = cx+'px'; svg.style.top = cy+'px';
-      sizeHeart(svg, maxW * (N-k)/N);
-      svg.style.scale = '0';
-      wipe.appendChild(svg);
-      svg.animate([{ scale:0 }, { scale:1 }], { duration:900, delay:k*110, easing:'cubic-bezier(.5,.05,.85,.4)', fill:'forwards' });
+      const { pos, sc } = heartGroup(cx, cy, RING_COLORS[k % RING_COLORS.length], maxW * (N-k)/N);
+      sc.style.transform = 'scale(0)';
+      wsvg.appendChild(pos);
+      sc.animate([{ transform:'scale(0)' }, { transform:'scale(1)' }], { duration:900, delay:k*110, easing:'cubic-bezier(.5,.05,.85,.4)', fill:'forwards' });
     }
     setTimeout(()=>{
       finish();
