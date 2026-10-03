@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi cumple · Marti</title>
+<meta name="theme-color" content="#ff5fa2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lilita+One&family=Rubik+Mono+One&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bombon:#ff5fa2;
+    --burbuja:#3fb8f5;
+    --bellota:#6ccf4d;
+    --ink:#1d1233;
+    --cream:#fff4fa;
+    --pink-soft:#ffd3e8;
+    --sky:#c9ecff;
+    --mint:#d6f5c8;
+    --heart:#ff3d86;
+    --pop:6px 6px 0 var(--ink);
+    --pop-sm:4px 4px 0 var(--ink);
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; font-family:'Fredoka',sans-serif; font-weight:500; color:var(--ink); background:var(--cream); overflow-x:hidden; }
+  body.locked{ overflow:hidden; height:100vh; }
+  h1,h2,h3{ font-family:'Lilita One',cursive; font-weight:400; margin:0; letter-spacing:.01em; }
+  img{ max-width:100%; display:block; }
+  a{ color:inherit; }
+  :focus-visible{ outline:4px solid var(--ink); outline-offset:3px; }
+
+  /* Rótulo de letras con contorno, como el logo de la serie */
+  .outline{
+    color:#fff; -webkit-text-stroke:7px var(--ink); paint-order:stroke fill;
+    text-shadow:4px 5px 0 var(--ink);
+  }
+  .c-pink{ color:var(--bombon); } .c-blue{ color:var(--burbuja); } .c-green{ color:var(--bellota); }
+
+  /* ====== Caja para tus PNG ====== */
+  .png-slot{ position:relative; width:var(--w,220px); max-width:100%; }
+  .png-slot img{ width:100%; height:auto; filter:drop-shadow(4px 6px 0 rgba(29,18,51,.2)); }
+  .png-slot .slot-label{ display:none; }
+  .png-slot.empty{
+    min-height:var(--h,180px); display:flex; align-items:center; justify-content:center;
+    border:3px dashed rgba(29,18,51,.5); border-radius:22px; background:rgba(255,255,255,.6);
+  }
+  .png-slot.empty img{ display:none; }
+  .png-slot.empty .slot-label{ display:block; text-align:center; padding:10px; font-size:.82rem; line-height:1.35; }
+  .png-slot.empty .slot-label b{ display:block; font-size:.95rem; }
+
+  /* ====== Barra superior (las chicas avanzan con el scroll) ====== */
+  #flybar{
+    position:fixed; top:0; left:0; right:0; height:48px; z-index:80;
+    background:
+      radial-gradient(circle at 20px 36px, #fff 0 9px, transparent 10px) 0 0/58px 48px repeat-x,
+      radial-gradient(circle at 44px 40px, #fff 0 7px, transparent 8px) 0 0/58px 48px repeat-x,
+      linear-gradient(var(--burbuja),var(--burbuja));
+    border-bottom:4px solid var(--ink);
+    opacity:0; transition:opacity .6s ease; pointer-events:none;
+    padding-top:env(safe-area-inset-top,0);
+  }
+  #flybar.show{ opacity:1; }
+  #flybar .mini{ position:absolute; top:50%; left:0; height:40px; width:auto; transform:translate(0,-50%); will-change:transform; }
+  #flybar .mini-emoji{ position:absolute; top:50%; left:0; font-size:28px; line-height:1; transform:translate(0,-50%); }
+
+  /* ====== Portada ====== */
+  #cover{
+    position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    background:#fbc3ca; overflow:hidden;
+    transition:opacity .5s ease;
+  }
+  .cover-content{
+    position:relative; z-index:2; height:100%; width:100%; max-width:560px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    gap:clamp(8px,1.8svh,16px);
+    padding:max(14px,env(safe-area-inset-top)) 20px max(14px,env(safe-area-inset-bottom));
+  }
+  /* Las chicas van en el centro de los corazones (los anillos se alinean con esta caja desde el script) */
+  .cover-girls{ --w:min(320px,74vw); --h:24svh; flex:0 1 auto; }
+  .cover-girls img{ width:auto; max-width:100%; max-height:31svh; margin:0 auto; }
+  .cover-girls.png-slot{ width:auto; max-width:100%; }
+  .cover-girls.png-slot.empty{ width:var(--w); }
+  .cover-title{ font-size:clamp(1.8rem,min(12.5vw,8.5svh),4.6rem); display:flex; flex-direction:column; align-items:center; gap:.4em; }
+
+  /* ====== Letras estilo logo de Powerpuff Girls ======
+     Capas: contorno negro (::before) > labio rosa oscuro (::after) > cara con degradé rosa (.face) */
+  .ppg{
+    position:relative; display:block; isolation:isolate; white-space:nowrap; text-transform:uppercase;
+    font-family:'Rubik Mono One','Lilita One',sans-serif; font-weight:400; line-height:1.05; letter-spacing:.02em;
+    transform:skewX(-8deg); padding:0 .1em;
+  }
+  .ppg::before,.ppg::after{ content:attr(data-text); position:absolute; left:0; top:0; width:100%; text-align:center; letter-spacing:inherit; padding:inherit; }
+  .ppg::before{ z-index:0; color:#000; -webkit-text-stroke:.46em #000; text-shadow:0 .14em 0 #000; }
+  .ppg::after{ z-index:1; color:#b3124f; -webkit-text-stroke:.12em #b3124f; text-shadow:0 .09em 0 #b3124f; }
+  .ppg .face{
+    position:relative; z-index:2; display:block; color:transparent;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.4), rgba(255,255,255,0) 55%),
+      linear-gradient(90deg,#f0679c 0%,#fbb6cf 22%,#f0679c 46%,#fbb6cf 72%,#f0679c 100%);
+    -webkit-background-clip:text; background-clip:text;
+  }
+  .ppg-sm{ font-size:.64em; }
+  .cover-sub{ font-size:clamp(.88rem,2.4svh,1.05rem); font-weight:600; background:#fff; border:3px solid var(--ink); border-radius:999px; padding:5px 16px; box-shadow:var(--pop-sm); }
+  .heart-holder{ line-height:0; }
+  .cover-heart{ width:clamp(64px,11svh,104px); height:auto; animation:heartbeat 1.1s ease-in-out infinite; filter:drop-shadow(4px 5px 0 rgba(29,18,51,.35)); }
+  .cover-cta{ font-family:'Lilita One',cursive; font-size:clamp(1rem,2.8svh,1.25rem); background:rgba(255,255,255,.85); border:3px solid var(--ink); border-radius:999px; padding:4px 16px; }
+  @media (max-height:560px){ .cover-sub{ display:none; } .cover-girls img{ max-height:28svh; } }
+  #cover.opening .cover-content > *:not(.heart-holder){ opacity:0; transition:opacity .35s ease; }
+  #cover.opening .cover-heart{ animation:none; opacity:0; }
+  @keyframes heartbeat{ 0%,100%{ transform:scale(1);} 20%{ transform:scale(1.18);} 40%{ transform:scale(1);} 60%{ transform:scale(1.12);} }
+
+  /* Corazones concéntricos de la intro de la serie */
+  .rings{ position:absolute; inset:0; z-index:0; overflow:hidden; }
+  .rings svg{ position:absolute; left:50%; top:var(--ty,44%); height:auto; will-change:scale; }
+  #wipe{ position:fixed; inset:0; z-index:200; overflow:hidden; pointer-events:none; }
+  #wipe svg{ position:absolute; height:auto; will-change:scale; }
+  .fx-heart{ position:fixed; z-index:300; pointer-events:none; transform:translate(-50%,-50%); }
+
+  /* ====== Secciones ====== */
+  section{ position:relative; padding:70px 22px; }
+  .wrap{ max-width:880px; margin:0 auto; text-align:center; }
+  .wave{ display:block; line-height:0; }
+  .wave svg{ display:block; width:100%; height:54px; }
+
+
+  /* ====== Portada de Martina (primera pantalla al entrar) ====== */
+  .portada{
+    position:relative; min-height:100vh; min-height:100svh; padding:76px 22px 70px; overflow:hidden;
+    background:#fbc3ca; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  }
+  .portada .rings{ --ty:46%; }
+  .portada-inner{ position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; }
+  .portada-photo .png-slot{ --w:min(340px,80vw); --h:min(400px,52vh); }
+  .portada-photo .png-slot img{ filter:drop-shadow(5px 8px 0 rgba(29,18,51,.3)); }
+  body:not(.locked) .portada-photo{ animation:popIn 1s .15s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes popIn{ from{ opacity:0; transform:translateY(40px) scale(.6) rotate(-4deg); } to{ opacity:1; transform:none; } }
+  .portada-name{ font-size:clamp(2.2rem,12vw,6rem); line-height:1; margin-top:18px; }
+  .portada-sub{ margin-top:14px; font-family:'Lilita One',cursive; font-size:clamp(1.4rem,6vw,2rem); background:#fff; border:4px solid var(--ink); border-radius:999px; padding:6px 26px; box-shadow:var(--pop-sm); }
+  .scroll-cue{
+    position:absolute; z-index:2; bottom:max(16px,env(safe-area-inset-bottom)); left:50%; width:46px; height:46px; margin-left:-23px;
+    display:flex; align-items:center; justify-content:center; border:4px solid var(--ink); border-radius:50%;
+    background:#fff; font-family:'Lilita One',cursive; font-size:1.4rem; box-shadow:var(--pop-sm);
+    animation:cue 1.4s ease-in-out infinite; text-decoration:none; color:var(--ink);
+  }
+  @keyframes cue{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(8px);} }
+
+  .hero{ background:var(--pink-soft); padding-top:70px; }
+  .hero h1{ font-size:clamp(3.6rem,17vw,7.4rem); line-height:.9; }
+  .hero h1 span{ display:block; }
+  .hero .lead{ max-width:460px; margin:22px auto 0; font-family:'Lilita One',cursive; font-size:clamp(1.5rem,6.5vw,2.1rem); line-height:1.15; color:var(--ink); }
+  .trio{ display:flex; justify-content:center; align-items:flex-end; gap:clamp(4px,2vw,22px); margin:34px 0 8px; }
+  .trio .png-slot{ --w:min(360px,86vw); --h:240px; }
+
+  .countdown{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; max-width:440px; margin:34px auto 0; }
+  .cd{ border:4px solid var(--ink); border-radius:18px; box-shadow:var(--pop-sm); padding:12px 4px 10px; background:#fff; }
+  .cd:nth-child(1){ background:var(--bombon); } .cd:nth-child(2){ background:var(--burbuja); }
+  .cd:nth-child(3){ background:var(--bellota); } .cd:nth-child(4){ background:#fff; }
+  .cd b{ display:block; font-family:'Lilita One',cursive; font-weight:400; font-size:2.1rem; line-height:1; color:#fff; -webkit-text-stroke:5px var(--ink); paint-order:stroke fill; }
+  .cd:nth-child(4) b{ color:var(--heart); }
+  .cd small{ display:block; margin-top:6px; font-size:.8rem; font-weight:700; }
+
+  .sky{ background:var(--sky); padding:30px 0 40px; overflow:hidden; }
+  .lane{ position:relative; height:250px; }
+  .flyer{ position:absolute; top:10px; left:-40%; animation:flyAcross 10s linear infinite; }
+  .flyer .png-slot{ --w:min(300px,64vw); --h:190px; animation:bob 1.6s ease-in-out infinite; }
+  @keyframes flyAcross{ from{ left:-40%; } to{ left:105%; } }
+  @keyframes bob{ 0%,100%{ transform:translateY(0) rotate(-2deg);} 50%{ transform:translateY(-14px) rotate(2deg);} }
+  .sky p{ font-family:'Lilita One',cursive; font-size:clamp(1.5rem,5vw,2.2rem); margin:0; padding:0 22px; text-align:center; }
+
+
+  /* ====== Galería de Martina ====== */
+  .gallery{ background:var(--pink-soft); padding-bottom:80px; }
+  .gallery h2{ font-size:clamp(2.2rem,8vw,3.4rem); line-height:1; margin-bottom:12px; }
+  .g-lead{ max-width:420px; margin:0 auto 38px; font-size:1.1rem; font-weight:600; line-height:1.4; }
+  .polaroids{ display:grid; grid-template-columns:repeat(2,1fr); gap:30px 16px; max-width:760px; margin:0 auto; padding:10px 4px 0; }
+  @media(min-width:700px){ .polaroids{ grid-template-columns:repeat(3,1fr); gap:38px 26px; } }
+  .pol{
+    --r:-3deg; --c:var(--bombon);
+    position:relative; display:block; width:100%; padding:9px 9px 38px; border:4px solid var(--ink); border-radius:12px;
+    background:#fff; box-shadow:var(--pop-sm); cursor:pointer; font:inherit; color:inherit;
+    transform:rotate(var(--r)); transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
+  }
+  .pol:nth-child(3n+2){ --r:2.5deg; --c:var(--burbuja); margin-top:14px; }
+  .pol:nth-child(3n){ --r:-1.5deg; --c:var(--bellota); }
+  .pol:nth-child(4){ --r:3deg; }
+
+  /* La foto 7 queda centrada al estar sola en su fila */
+  .pol:last-child:nth-child(odd){
+    grid-column:1 / -1;
+    width:calc(50% - 8px);
+    justify-self:center;
+  }
+  @media(min-width:700px){
+    .pol:last-child:nth-child(odd){
+      grid-column:2;
+      width:100%;
+    }
+  }
+
+  .pol:hover,.pol:focus-visible{ transform:rotate(0) scale(1.05); box-shadow:var(--pop); z-index:2; }
+  .pol::before{
+    content:''; position:absolute; top:-15px; left:50%; width:74px; height:26px; transform:translateX(-50%) rotate(-3deg);
+    background:var(--c); opacity:.9; border:3px solid var(--ink); border-radius:4px;
+  }
+  .pol::after{ content:'♥'; position:absolute; bottom:6px; left:0; right:0; text-align:center; font-size:1.5rem; line-height:1; color:var(--heart); text-shadow:2px 2px 0 var(--ink); }
+  .pol .ph{ display:block; width:100%; position:relative; aspect-ratio:4/5; overflow:hidden; border:3px solid var(--ink); border-radius:6px; background:var(--c); }
+  .pol .ph img{ width:100%; height:100%; object-fit:cover; filter:none; }
+  .pol .miss{ display:none; position:absolute; font-family:'Fredoka',sans-serif; font-weight:600; color:var(--ink); inset:0; align-items:center; justify-content:center; padding:10px; text-align:center; font-size:.85rem; line-height:1.35; background:rgba(255,255,255,.75); border:3px dashed rgba(29,18,51,.5); }
+  .pol.empty .miss{ display:flex; }
+  .pol.empty .ph img{ display:none; }
+
+  .lightbox{ position:fixed; inset:0; z-index:150; display:none; align-items:center; justify-content:center; background:rgba(29,18,51,.88); padding:20px; }
+  .lightbox.open{ display:flex; }
+  .lightbox .frame{ position:relative; max-width:min(92vw,520px); max-height:84vh; background:#fff; border:5px solid var(--ink); border-radius:14px; padding:10px; box-shadow:var(--pop); }
+  .lightbox img{ display:block; max-width:100%; max-height:calc(84vh - 30px); width:auto; height:auto; margin:0 auto; border-radius:6px; }
+  .lb-btn{
+    position:absolute; width:52px; height:52px; border:4px solid var(--ink); border-radius:50%; background:var(--bombon); color:#fff;
+    font-family:'Lilita One',cursive; font-size:1.5rem; line-height:1; cursor:pointer; box-shadow:var(--pop-sm); text-shadow:2px 2px 0 var(--ink);
+  }
+  .lb-close{ top:max(14px,env(safe-area-inset-top)); right:14px; background:var(--heart); }
+  .lb-prev{ left:10px; top:50%; transform:translateY(-50%); background:var(--burbuja); }
+  .lb-next{ right:10px; top:50%; transform:translateY(-50%); background:var(--bellota); }
+
+  .details{ background:var(--mint); }
+  .details h2, .show h2, .rsvp h2{ font-size:clamp(2.2rem,8vw,3.4rem); line-height:1; margin-bottom:30px; }
+  .grid{ display:grid; grid-template-columns:1fr; gap:22px; max-width:640px; margin:0 auto; }
+  @media(min-width:640px){ .grid{ grid-template-columns:1fr 1fr; } }
+  .card{ background:#fff; border:4px solid var(--ink); border-radius:26px; box-shadow:var(--pop); padding:26px 20px 24px; }
+  .card .ico{ font-size:2.4rem; line-height:1; }
+  .card h3{ font-size:1.6rem; margin:10px 0 6px; }
+  .card p{ margin:0; font-size:1.2rem; line-height:1.4; font-weight:600; }
+  .btn{
+    display:inline-block; margin-top:16px; padding:12px 24px; border:4px solid var(--ink); border-radius:999px;
+    background:var(--burbuja); color:#fff; font-family:'Lilita One',cursive; font-size:1.1rem; text-decoration:none; cursor:pointer;
+    box-shadow:var(--pop-sm); -webkit-text-stroke:0; text-shadow:2px 2px 0 var(--ink); transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{ transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--ink); }
+  .btn:active{ transform:translate(3px,3px); box-shadow:1px 1px 0 var(--ink); }
+
+  .show{ background:var(--burbuja); }
+  .show h2{ font-size:clamp(2.2rem,8vw,3.4rem); }
+  .show .card{ max-width:520px; margin:0 auto; }
+  .show .names{ font-family:'Lilita One',cursive; font-size:clamp(1.8rem,7vw,2.6rem); line-height:1.05; color:var(--bombon); -webkit-text-stroke:5px var(--ink); paint-order:stroke fill; margin:6px 0 10px; }
+  .show .decor{ display:flex; justify-content:center; margin-top:26px; }
+  .show .decor .png-slot{ --w:260px; --h:200px; }
+
+  .rsvp{ background:var(--pink-soft); }
+  .form{ max-width:440px; margin:0 auto; text-align:left; background:#fff; border:4px solid var(--ink); border-radius:26px; box-shadow:var(--pop); padding:24px 22px 26px; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-weight:700; margin-bottom:6px; }
+  .field input,.field select{
+    width:100%; padding:13px 16px; border:3px solid var(--ink); border-radius:16px; background:var(--cream);
+    font:inherit; font-weight:600; font-size:1rem; color:var(--ink);
+  }
+  .guests{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; margin:0 0 22px; padding:18px 16px 20px;
+    border:4px solid var(--ink); border-radius:20px; background:var(--bombon); box-shadow:var(--pop-sm); text-align:center;
+  }
+  .guests-ico{
+    display:flex; align-items:center; justify-content:center; flex:none; width:58px; height:58px;
+    border:4px solid var(--ink); border-radius:50%; background:#fff; font-size:1.7rem; line-height:1;
+  }
+  .guests-txt{ display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; }
+  .guests-txt small{ font-size:.95rem; font-weight:700; color:#fff; text-shadow:2px 2px 0 var(--ink); }
+  .guests-txt b{
+    font-family:'Lilita One',cursive; font-weight:400; font-size:clamp(1.9rem,9vw,2.6rem); line-height:1; white-space:nowrap;
+    color:#fff; -webkit-text-stroke:6px var(--ink); paint-order:stroke fill; text-shadow:3px 4px 0 var(--ink);
+  }
+  .form .btn{ width:100%; margin-top:6px; background:var(--bellota); text-align:center; }
+
+  footer{ background:var(--heart); color:#fff; text-align:center; padding:60px 22px calc(50px + env(safe-area-inset-bottom,0)); border-top:4px solid var(--ink); }
+  footer .decor{ display:flex; justify-content:center; margin-bottom:16px; }
+  footer .decor .png-slot{ --w:240px; --h:180px; }
+  footer h2{ font-size:clamp(2.2rem,9vw,3.6rem); line-height:1; }
+  footer .footer-bottom{ margin-top:34px; padding-top:22px; border-top:3px solid rgba(255,255,255,.35); }
+  footer .footer-dev{ margin:0 0 14px; font-size:.95rem; font-weight:600; }
+  footer .dev-link{ color:#fff; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
+  footer .footer-more-info{
+    display:inline-block; padding:10px 22px; border:4px solid var(--ink); border-radius:999px; background:#fff; color:var(--ink);
+    font-family:'Lilita One',cursive; font-size:1rem; text-decoration:none; box-shadow:var(--pop-sm); transition:transform .15s ease, box-shadow .15s ease;
+  }
+  footer .footer-more-info:hover{ transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--ink); }
+  footer .footer-more-info:active{ transform:translate(3px,3px); box-shadow:1px 1px 0 var(--ink); }
+  footer p{ margin:14px 0 0; font-weight:600; font-size:1.05rem; }
+
+  /* ====== Botón de música ====== */
+  .music-btn{
+    position:fixed; z-index:90; right:max(14px,env(safe-area-inset-right)); bottom:max(14px,env(safe-area-inset-bottom));
+    width:78px; height:78px; border:0; background:none; cursor:pointer; padding:0;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .6s ease, transform .15s ease;
+  }
+  .music-btn.show{ opacity:1; pointer-events:auto; }
+  .music-btn:hover{ transform:scale(1.08); }
+  .music-btn:active{ transform:scale(.94); }
+  /* Tu PNG: salta mientras suena la música y queda quieto cuando está en pausa */
+  .music-btn .mi-img{ width:100%; height:100%; object-fit:contain; filter:drop-shadow(3px 5px 0 rgba(29,18,51,.35)); }
+  .music-btn.on .mi-img{ animation:musicHop 1s ease-in-out infinite; }
+  @keyframes musicHop{ 0%,100%{ transform:translateY(0) rotate(-4deg); } 50%{ transform:translateY(-10px) rotate(4deg); } }
+  .music-btn .mi{ display:none; }
+  /* Si falta el PNG, se usa el botón redondo con el parlante */
+  .music-btn.fallback{ width:56px; height:56px; border:4px solid var(--ink); border-radius:50%; background:var(--bombon); box-shadow:var(--pop-sm); }
+  .music-btn.fallback.on{ background:var(--bellota); }
+  .music-btn.fallback .mi-img{ display:none; }
+  .music-btn.fallback .mi{ display:block; font-size:1.6rem; line-height:1; }
+  .music-btn.fallback.on .mi{ animation:musicHop 1s ease-in-out infinite; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body class="locked">
+
+<!-- Barra superior: aquí avanzan las chicas con el scroll (PNG: chicas-volando.png) -->
+<div id="flybar" aria-hidden="true">
+  <img class="mini" id="miniFly" src="chicas-volando.png" alt="">
+</div>
+
+<!-- Música de fondo: guardá tu canción como cancion.mp3 en la misma carpeta -->
+<audio id="bgm" src="cancion.mp3" loop preload="auto"></audio>
+<button class="music-btn" id="musicBtn" type="button" aria-pressed="false" aria-label="Reproducir la música">
+  <!-- PNG del botón de música: musica-icono.png (salta mientras suena, quieto en pausa) -->
+  <img class="mi-img" id="musicImg" src="musica-icono.png" alt="">
+  <span class="mi" aria-hidden="true">🔇</span>
+</button>
+
+<!-- Portada -->
+<div id="cover" role="button" tabindex="0" aria-label="Tocá el corazón para abrir la invitación">
+  <div class="rings" id="coverRings" aria-hidden="true"></div>
+  <div class="cover-content">
+    <!-- PNG 1: portada-chicas.png -->
+    <div class="png-slot cover-girls" id="coverGirls">
+      <img src="portada-chicas.png" alt="Las Chicas Superpoderosas">
+      <span class="slot-label"><b>portada-chicas.png</b>Las tres juntas (van en el centro de los corazones)</span>
+    </div>
+    <div class="cover-title" role="heading" aria-level="2" aria-label="Mis 7 años Martina">
+      <span class="ppg ppg-sm" data-text="MIS 7 AÑOS" aria-hidden="true"><span class="face">MIS 7 AÑOS</span></span>
+      <span class="ppg" data-text="MARTINA" aria-hidden="true"><span class="face">MARTINA</span></span>
+    </div>
+    <div class="cover-sub">¡Las Chicas Superpoderosas te invitan!</div>
+    <div class="heart-holder">
+      <svg class="cover-heart" id="coverHeart" viewBox="-2 -2 36 33" aria-hidden="true">
+        <path d="M23.6 0c-3.4 0-6.4 1.9-7.6 4.8C14.8 1.9 11.8 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.5 11 15.9 16 20.6 5-4.7 16-11.1 16-20.6C32 3.8 28.2 0 23.6 0z" fill="#ff3d86" stroke="#1d1233" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M8 6.5c1.6-1.4 3.6-1.5 5-.4" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".85"/>
+      </svg>
+    </div>
+    <div class="cover-cta">Tocá el corazón para abrir</div>
+  </div>
+</div>
+
+<main>
+  <!-- PORTADA DE MARTINA: PNG martina-portada.png (foto de ella, fondo transparente) -->
+  <section class="portada" aria-label="Portada">
+    <div class="rings" id="portadaRings" aria-hidden="true"></div>
+    <div class="portada-inner">
+      <div class="portada-photo">
+        <div class="png-slot">
+          <img src="martina-portada.png" alt="Martina">
+          <span class="slot-label"><b>martina-portada.png</b>Foto de Martina (fondo transparente)</span>
+        </div>
+      </div>
+      <h1 class="portada-name" aria-label="Martina"><span class="ppg" data-text="MARTINA" aria-hidden="true"><span class="face">MARTINA</span></span></h1>
+      <div class="portada-sub">¡Cumple 7 años!</div>
+    </div>
+    <a class="scroll-cue" href="#hero" aria-label="Seguir bajando">↓</a>
+  </section>
+
+  <div class="wave" style="background:#fbc3ca"><svg viewBox="0 0 1440 54" preserveAspectRatio="none"><path d="M0,26 C240,66 480,0 720,28 C960,56 1200,2 1440,26 L1440,54 L0,54Z" fill="var(--pink-soft)"/></svg></div>
+  <!-- Título y cuenta regresiva -->
+  <section class="hero" id="hero">
+    <div class="wrap">
+      <h2 class="outline" style="font-size:clamp(3rem,14vw,6rem);line-height:.92;margin-bottom:0"><span class="c-blue" style="display:block">Y...</span><span class="c-pink" style="display:block">¡Quiere</span><span class="c-blue" style="display:block">invitarte!</span></h2>
+      <p class="lead">¡A festejar junto a ella!</p>
+
+      <!-- GIF de las chicas: chicas-gif.gif -->
+      <div class="trio">
+        <div class="png-slot"><img src="chicas-gif.gif" alt="Las Chicas Superpoderosas"><span class="slot-label"><b>chicas-gif.gif</b>GIF de las Chicas Superpoderosas</span></div>
+      </div>
+
+      <div class="countdown" id="countdown" aria-live="polite">
+        <div class="cd"><b id="cd-d">00</b><small>Días</small></div>
+        <div class="cd"><b id="cd-h">00</b><small>Horas</small></div>
+        <div class="cd"><b id="cd-m">00</b><small>Min</small></div>
+        <div class="cd"><b id="cd-s">00</b><small>Seg</small></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wave" style="background:var(--pink-soft)"><svg viewBox="0 0 1440 54" preserveAspectRatio="none"><path d="M0,26 C240,66 480,0 720,28 C960,56 1200,2 1440,26 L1440,54 L0,54Z" fill="var(--sky)"/></svg></div>
+
+  <!-- Franja del cielo: acá cruzan volando (PNG 2: chicas-volando.png) -->
+  <section class="sky" aria-label="Las chicas volando">
+    <div class="lane">
+      <div class="flyer">
+        <div class="png-slot">
+          <img src="chicas-volando.png" alt="Las Chicas Superpoderosas volando">
+          <span class="slot-label"><b>chicas-volando.png</b>Las chicas volando (cruza la pantalla)</span>
+        </div>
+      </div>
+    </div>
+    <p>¡Ya van volando a la fiesta!</p>
+  </section>
+
+  <div class="wave" style="background:var(--sky)"><svg viewBox="0 0 1440 54" preserveAspectRatio="none"><path d="M0,26 C240,66 480,0 720,28 C960,56 1200,2 1440,26 L1440,54 L0,54Z" fill="var(--pink-soft)"/></svg></div>
+
+  <!-- Galería de Martina: fotos foto-marti-1 ... foto-marti-7 (jpg, jpeg, png o webp) -->
+  <section class="gallery" aria-label="Fotos de Martina">
+    <div class="wrap">
+      <h2 class="outline">Ella es Martina</h2>
+      <p class="g-lead">La superheroína que festeja hoy su cumpleaños. Tocá una foto para verla grande.</p>
+      <div class="polaroids" id="gallery"></div>
+    </div>
+  </section>
+
+  <div class="wave" style="background:var(--pink-soft)"><svg viewBox="0 0 1440 54" preserveAspectRatio="none"><path d="M0,26 C240,66 480,0 720,28 C960,56 1200,2 1440,26 L1440,54 L0,54Z" fill="var(--mint)"/></svg></div>
+
+  <!-- Datos -->
+  <section class="details">
+    <div class="wrap">
+      <h2 class="outline">Cuándo y dónde</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">🗓️</div>
+          <h3>Fecha</h3>
+          <p>Domingo 8 de noviembre<br>17:00 hs</p>
+        </div>
+        <div class="card">
+          <div class="ico">📍</div>
+          <h3>Lugar</h3>
+          <p>Salón Rancho Toloza</p>
+          <!-- Ubicación exacta del salón (link de Google Maps) -->
+          <a class="btn" href="https://share.google/taKPvoDEH5ewabizr" target="_blank" rel="noopener">Cómo llegar</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wave" style="background:var(--mint)"><svg viewBox="0 0 1440 54" preserveAspectRatio="none"><path d="M0,26 C240,66 480,0 720,28 C960,56 1200,2 1440,26 L1440,54 L0,54Z" fill="var(--burbuja)"/></svg></div>
+
+  <!-- Show -->
+  <section class="show">
+    <div class="wrap">
+      <h2 class="outline">¡Hay show!</h2>
+      <div class="card">
+        <div class="ico">🎤</div>
+        <div class="names">PATATIN Y PATATAN</div>
+        <p>Vienen a actuar con un show increible y lleno de diversion.</p>
+      </div>
+      <!-- PNG 6: show-decor.png -->
+      <div class="decor">
+        <div class="png-slot"><img src="show-decor.png" alt=""><span class="slot-label"><b>show-decor.png</b>Imagen de la serie para el show</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wave" style="background:var(--burbuja)"><svg viewBox="0 0 1440 54" preserveAspectRatio="none"><path d="M0,26 C240,66 480,0 720,28 C960,56 1200,2 1440,26 L1440,54 L0,54Z" fill="var(--pink-soft)"/></svg></div>
+
+  <!-- Confirmar asistencia -->
+  <section class="rsvp">
+    <div class="wrap">
+      <h2 class="outline">¿Venís?</h2>
+      <form class="form" id="rsvpForm">
+        <div class="guests" id="guestsBox">
+          <span class="guests-ico" aria-hidden="true">👥</span>
+          <span class="guests-txt">
+            <small>Esta invitación es para</small>
+            <b id="guestsInfo"></b>
+          </span>
+        </div>
+        <div class="field">
+          <label for="nombre">Tu nombre</label>
+          <input id="nombre" name="nombre" type="text" placeholder="Nombre y apellido" required autocomplete="name">
+        </div>
+        <button class="btn" type="submit">Confirmar por WhatsApp</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <!-- PNG 8: cierre-chicas.png -->
+  <div class="decor">
+    <div class="png-slot"><img src="cierre-chicas.png" alt="Las Chicas Superpoderosas se despiden"><span class="slot-label" style="color:var(--ink)"><b>cierre-chicas.png</b>Imagen de cierre</span></div>
+  </div>
+  <h2 class="outline">¡Te esperamos!</h2>
+  <!-- <p>Martina cumple 7 · 8 de noviembre · 17:00 hs</p> -->
+  <div class="footer-bottom">
+    <p class="footer-dev">Desarrollado por <a class="dev-link" href="https://wa.me/5493865244579" target="_blank" rel="noopener noreferrer">Elías Said</a></p>
+    <a class="footer-more-info" href="https://wa.me/5493865244579" target="_blank" rel="noopener noreferrer">Click aquí para contactar al desarrollador</a>
+  </div>
+</footer>
+
+<!-- Visor de fotos -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Foto de Martina">
+  <button class="lb-btn lb-close" id="lbClose" type="button" aria-label="Cerrar">✕</button>
+  <button class="lb-btn lb-prev" id="lbPrev" type="button" aria-label="Foto anterior">‹</button>
+  <div class="frame"><img id="lbImg" alt="Foto de Martina"></div>
+  <button class="lb-btn lb-next" id="lbNext" type="button" aria-label="Foto siguiente">›</button>
+</div>
+
+<script>
+(function(){
+  /* ====== CONFIGURACIÓN ====== */
+  // Número de WhatsApp que recibe las confirmaciones (código de país + área + número, sin + ni espacios).
+  const WHATSAPP_NUMBER = '5493816424661';
+  // Fecha de la fiesta (hora de Argentina, UTC-3)
+  const PARTY = new Date('2026-11-08T17:00:00-03:00');
+  // Cantidad de invitados: se define en el link con ?personas=N (si no está, es 1).
+  // Ejemplo: https://tu-sitio.com/?personas=3
+  const q = parseInt(new URLSearchParams(location.search).get('personas'), 10);
+  const GUESTS = (Number.isFinite(q) && q > 0 && q <= 20) ? q : 1;
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cover = document.getElementById('cover');
+  const flybar = document.getElementById('flybar');
+
+  /* ====== Cajas de PNG: si falta la imagen, se ve la caja punteada con el nombre ====== */
+  document.querySelectorAll('.png-slot img').forEach(img=>{
+    const slot = img.closest('.png-slot');
+    const mark = ()=> slot.classList.add('empty');
+    img.addEventListener('error', mark);
+    if(img.complete && img.naturalWidth === 0) mark();
+  });
+  // Barra superior: si falta el PNG, usa un corazón
+  const mini = document.getElementById('miniFly');
+  let miniEl = mini;
+  mini.addEventListener('error', ()=>{
+    const s = document.createElement('span');
+    s.className = 'mini-emoji'; s.textContent = '💖';
+    mini.replaceWith(s); miniEl = s;
+  });
+
+  /* ====== Corazones ====== */
+  const COLORS = ['#e8434e','#f58a96','#fbbcc4','#ff3d86','#ffffff'];
+  const HEART_PATH = 'M23.6 0c-3.4 0-6.4 1.9-7.6 4.8C14.8 1.9 11.8 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.5 11 15.9 16 20.6 5-4.7 16-11.1 16-20.6C32 3.8 28.2 0 23.6 0z';
+  const RING_COLORS = ['#ee4b57','#f78f9a','#fbc3ca'];
+  const NS = 'http://www.w3.org/2000/svg';
+  function ringHeart(color){
+    const svg = document.createElementNS(NS,'svg');
+    svg.setAttribute('viewBox','-2 -2 36 33');
+    const path = document.createElementNS(NS,'path');
+    path.setAttribute('d', HEART_PATH); path.setAttribute('fill', color);
+    svg.appendChild(path); return svg;
+  }
+  // Centra el corazón en su punto con márgenes (así el scale crece desde el centro exacto)
+  function sizeHeart(svg, w){
+    svg.style.width = w + 'px';
+    svg.style.marginLeft = (-w/2) + 'px';
+    svg.style.marginTop = (-(w*33/36)/2) + 'px';
+  }
+  // Fondo de corazones concéntricos como la intro de la serie:
+  // salen del centro y se expanden hacia afuera sin parar (cada corazón avanza 3 lugares y se repite sin saltos)
+  function buildRings(id){
+    const box = document.getElementById(id);
+    box.textContent = '';
+    const big = Math.max(innerWidth, innerHeight);
+    const step = big * 0.15;
+    const N = Math.ceil(big * 1.9 / step) + 1;
+    for(let k=N; k>=-3; k--){
+      const svg = ringHeart(RING_COLORS[((k % 3) + 3) % 3]);
+      sizeHeart(svg, step);
+      svg.style.scale = '0';
+      box.appendChild(svg);
+      const from = k + 1, to = k + 4;
+      if(reduce){ svg.style.scale = String(Math.max(0, from)); continue; }
+      const frames = from >= 0
+        ? [{ scale:from }, { scale:to }]
+        : [{ scale:0, offset:0 }, { scale:0, offset:-from/3 }, { scale:to, offset:1 }];
+      svg.animate(frames, { duration:3600, iterations:Infinity, easing:'linear' });
+    }
+  }
+  buildRings('coverRings');
+  buildRings('portadaRings');
+  let rt;
+  addEventListener('resize', ()=>{ clearTimeout(rt); rt = setTimeout(()=>{ buildRings('coverRings'); buildRings('portadaRings'); }, 250); });
+  function heartEl(color, size){
+    const el = document.createElement('div');
+    el.className = 'fx-heart';
+    el.style.width = size + 'px';
+    el.innerHTML = '<svg viewBox="-2 -2 36 33" style="display:block;width:100%"><path d="M23.6 0c-3.4 0-6.4 1.9-7.6 4.8C14.8 1.9 11.8 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.5 11 15.9 16 20.6 5-4.7 16-11.1 16-20.6C32 3.8 28.2 0 23.6 0z" fill="'+color+'" stroke="#1d1233" stroke-width="2.4" stroke-linejoin="round"/></svg>';
+    document.body.appendChild(el);
+    return el;
+  }
+  const rnd = (a,b)=> a + Math.random()*(b-a);
+
+  function burst(x, y){
+    for(let i=0;i<46;i++){
+      const size = rnd(26,64);
+      const el = heartEl(COLORS[i % COLORS.length], size);
+      el.style.left = x+'px'; el.style.top = y+'px';
+      const ang = rnd(0, Math.PI*2), dist = rnd(120, Math.max(innerWidth, innerHeight)*.75);
+      const dx = Math.cos(ang)*dist, dy = Math.sin(ang)*dist, rot = rnd(-40,40);
+      const a = el.animate([
+        { transform:'translate(-50%,-50%) scale(0) rotate(0deg)', opacity:1 },
+        { transform:`translate(calc(-50% + ${dx*.8}px), calc(-50% + ${dy*.8}px)) scale(1) rotate(${rot}deg)`, opacity:1, offset:.7 },
+        { transform:`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.9) rotate(${rot}deg)`, opacity:0 }
+      ], { duration:rnd(900,1400), easing:'cubic-bezier(.15,.8,.3,1)', fill:'forwards' });
+      a.onfinish = ()=> el.remove();
+    }
+  }
+  function rise(){
+    for(let i=0;i<38;i++){
+      const size = rnd(24,54);
+      const el = heartEl(COLORS[i % COLORS.length], size);
+      const x = rnd(2,98);
+      el.style.left = x+'vw'; el.style.top = '105vh';
+      const sway = rnd(-60,60);
+      const a = el.animate([
+        { transform:'translate(-50%,0) rotate(-8deg)', opacity:1 },
+        { transform:`translate(calc(-50% + ${sway}px), -60vh) rotate(8deg)`, opacity:1, offset:.6 },
+        { transform:`translate(calc(-50% - ${sway}px), -125vh) rotate(-6deg)`, opacity:0 }
+      ], { duration:rnd(3000,5200), delay:rnd(0,1600), easing:'ease-out', fill:'both' });
+      a.onfinish = ()=> el.remove();
+    }
+  }
+
+  /* ====== Música de fondo ====== */
+  const bgm = document.getElementById('bgm');
+  const musicBtn = document.getElementById('musicBtn');
+  let wantMusic = false;
+  function setMusicUI(on){
+    musicBtn.classList.toggle('on', on);
+    musicBtn.setAttribute('aria-pressed', String(on));
+    musicBtn.setAttribute('aria-label', on ? 'Pausar la música' : 'Reproducir la música');
+    musicBtn.querySelector('.mi').textContent = on ? '🔊' : '🔇';
+  }
+  function playMusic(){
+    bgm.volume = 0.6;
+    const p = bgm.play();
+    wantMusic = true; setMusicUI(true);
+    if(p && p.catch) p.catch(()=>{ wantMusic = false; setMusicUI(false); });
+  }
+  function pauseMusic(){ wantMusic = false; bgm.pause(); setMusicUI(false); }
+  musicBtn.addEventListener('click', ()=> wantMusic ? pauseMusic() : playMusic());
+  // Si falta el PNG del botón, se usa el botón redondo con el parlante
+  document.getElementById('musicImg').addEventListener('error', ()=> musicBtn.classList.add('fallback'));
+  // Si falta el archivo de la canción, se oculta el botón
+  bgm.addEventListener('error', ()=>{ musicBtn.style.display = 'none'; });
+  // Si cambian de pestaña o bloquean el celu, se pausa y vuelve sola si estaba sonando
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden){ bgm.pause(); }
+    else if(wantMusic){ bgm.play().catch(()=>{}); }
+  });
+
+  /* ====== Abrir la invitación ====== */
+  let opened = false;
+  function openInvite(){
+    if(opened) return; opened = true;
+    playMusic();   // arranca con el toque del corazón (los navegadores lo exigen)
+    const finish = ()=>{
+      cover.style.display = 'none';
+      document.body.classList.remove('locked');
+      flybar.classList.add('show');
+      musicBtn.classList.add('show');
+      window.scrollTo(0,0);
+      onScroll();
+    };
+    if(reduce){
+      cover.style.opacity = '0';
+      setTimeout(finish, 300);
+      return;
+    }
+    const r = document.getElementById('coverHeart').getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    cover.classList.add('opening');
+    burst(cx, cy);
+
+    // Corazones concéntricos que crecen desde el corazón tocado y tapan la pantalla
+    const wipe = document.createElement('div'); wipe.id = 'wipe';
+    document.body.appendChild(wipe);
+    const far = Math.hypot(Math.max(cx, innerWidth-cx), Math.max(cy, innerHeight-cy));
+    const maxW = far * 4.4, N = 6;
+    for(let k=0;k<N;k++){
+      const svg = ringHeart(RING_COLORS[k % RING_COLORS.length]);
+      svg.style.left = cx+'px'; svg.style.top = cy+'px';
+      sizeHeart(svg, maxW * (N-k)/N);
+      svg.style.scale = '0';
+      wipe.appendChild(svg);
+      svg.animate([{ scale:0 }, { scale:1 }], { duration:900, delay:k*110, easing:'cubic-bezier(.5,.05,.85,.4)', fill:'forwards' });
+    }
+    setTimeout(()=>{
+      finish();
+      wipe.animate([{opacity:1},{opacity:0}], { duration:800, easing:'ease-out', fill:'forwards' }).onfinish = ()=> wipe.remove();
+      rise();
+    }, 900 + (N-1)*110 + 80);
+  }
+  cover.addEventListener('click', openInvite);
+  cover.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openInvite(); } });
+
+  /* ====== Galería de Martina ====== */
+  const PHOTO_COUNT = 7;                  // cuántas fotos mostrar
+  const EXTS = ['jpg','jpeg','png','webp'];
+  const gal = document.getElementById('gallery');
+  const lb = document.getElementById('lightbox'), lbImg = document.getElementById('lbImg');
+  const found = {};                        // n -> url encontrada
+  let current = 0;
+
+  function tryLoad(img, n, i=0){
+    if(i >= EXTS.length){ img.closest('.pol').classList.add('empty'); return; }
+    const url = `foto-marti-${n}.${EXTS[i]}`;
+    img.onload = ()=>{ found[n] = url; };
+    img.onerror = ()=> tryLoad(img, n, i+1);
+    img.src = url;
+  }
+  for(let n=1;n<=PHOTO_COUNT;n++){
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pol'; b.setAttribute('aria-label', `Ver foto ${n} de Martina`);
+    b.innerHTML = `<span class="ph"><img alt="Martina, foto ${n}" loading="lazy"><span class="miss"><span><b>foto-marti-${n}</b><br>(jpg, jpeg, png o webp)</span></span></span>`;
+    b.addEventListener('click', ()=> openPhoto(n));
+    gal.appendChild(b);
+    tryLoad(b.querySelector('img'), n);
+  }
+  const avail = ()=> Object.keys(found).map(Number).sort((a,b)=>a-b);
+  function openPhoto(n){
+    if(!found[n]) return;
+    current = n; lbImg.src = found[n]; lb.classList.add('open'); document.getElementById('lbClose').focus();
+  }
+  function step(d){
+    const list = avail(); if(!list.length) return;
+    const i = list.indexOf(current);
+    openPhoto(list[(i + d + list.length) % list.length]);
+  }
+  function closeLb(){ lb.classList.remove('open'); lbImg.removeAttribute('src'); }
+  document.getElementById('lbClose').addEventListener('click', closeLb);
+  document.getElementById('lbPrev').addEventListener('click', ()=> step(-1));
+  document.getElementById('lbNext').addEventListener('click', ()=> step(1));
+  lb.addEventListener('click', e=>{ if(e.target === lb) closeLb(); });
+  addEventListener('keydown', e=>{
+    if(!lb.classList.contains('open')) return;
+    if(e.key==='Escape') closeLb();
+    if(e.key==='ArrowLeft') step(-1);
+    if(e.key==='ArrowRight') step(1);
+  });
+  let tx = null;
+  lb.addEventListener('touchstart', e=>{ tx = e.touches[0].clientX; }, {passive:true});
+  lb.addEventListener('touchend', e=>{
+    if(tx===null) return; const dx = e.changedTouches[0].clientX - tx; tx = null;
+    if(Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+  });
+
+  /* ====== Barra superior: avanza con el scroll ====== */
+  function onScroll(){
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const p = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+    const w = miniEl.getBoundingClientRect().width || 60;
+    miniEl.style.transform = `translate(${p * (innerWidth - w)}px,-50%)`;
+  }
+  addEventListener('scroll', onScroll, { passive:true });
+  addEventListener('resize', onScroll);
+
+  /* ====== Cuenta regresiva ====== */
+  const pad = n => String(n).padStart(2,'0');
+  function tick(){
+    let d = PARTY - new Date();
+    if(d < 0) d = 0;
+    const s = Math.floor(d/1000);
+    document.getElementById('cd-d').textContent = pad(Math.floor(s/86400));
+    document.getElementById('cd-h').textContent = pad(Math.floor(s%86400/3600));
+    document.getElementById('cd-m').textContent = pad(Math.floor(s%3600/60));
+    document.getElementById('cd-s').textContent = pad(s%60);
+  }
+  tick(); setInterval(tick, 1000);
+
+  /* ====== Invitados según el link ====== */
+  document.getElementById('guestsInfo').textContent =
+    GUESTS === 1 ? '1 persona' : `${GUESTS} personas`;
+
+  /* ====== Confirmar por WhatsApp ====== */
+  document.getElementById('rsvpForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const nombre = document.getElementById('nombre').value.trim();
+    const msg = `¡Hola! Confirmo mi asistencia al cumple de Martina 💖\nNombre: ${nombre}\nPersonas: ${GUESTS}`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+  });
+})();
+</script>
+</body>
+</html>
