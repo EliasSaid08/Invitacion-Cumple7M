@@ -123,9 +123,9 @@
 
   /* Corazones concéntricos de la intro de la serie */
   .rings{ position:absolute; inset:0; z-index:0; overflow:hidden; }
-  .rings svg{ position:absolute; left:0; top:0; width:100%; height:100%; }
+  .rings canvas{ position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
   #wipe{ position:fixed; inset:0; z-index:200; overflow:hidden; pointer-events:none; }
-  #wipe svg{ position:absolute; left:0; top:0; width:100%; height:100%; }
+  #wipe canvas{ position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
   .fx-heart{ position:fixed; z-index:300; pointer-events:none; transform:translate(-50%,-50%); }
 
   /* ====== Secciones ====== */
@@ -582,61 +582,65 @@
   const HEART_PATH = 'M23.6 0c-3.4 0-6.4 1.9-7.6 4.8C14.8 1.9 11.8 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.5 11 15.9 16 20.6 5-4.7 16-11.1 16-20.6C32 3.8 28.2 0 23.6 0z';
   const RING_COLORS = ['#ee4b57','#f78f9a','#fbc3ca'];
   const NS = 'http://www.w3.org/2000/svg';
-  function ringHeart(color){
-    const svg = document.createElementNS(NS,'svg');
-    svg.setAttribute('viewBox','-2 -2 36 33');
-    const path = document.createElementNS(NS,'path');
-    path.setAttribute('d', HEART_PATH); path.setAttribute('fill', color);
-    svg.appendChild(path); return svg;
-  }
-  // Corazones como paths dentro de UN solo SVG: más liviano y sin cuadrados raros en el celular
-  function heartGroup(cx, cy, color, size){
-    const pos = document.createElementNS(NS,'g');
-    pos.setAttribute('transform', 'translate(' + cx + ' ' + cy + ')');
-    const sc = document.createElementNS(NS,'g');
-    sc.style.transformOrigin = '0 0';
-    const p = document.createElementNS(NS,'path');
-    p.setAttribute('d', HEART_PATH); p.setAttribute('fill', color);
-    p.setAttribute('transform', 'scale(' + (size/36) + ') translate(-16 -14.5)');
-    sc.appendChild(p); pos.appendChild(sc);
-    return { pos, sc };
-  }
-  function newSvg(){
-    const svg = document.createElementNS(NS,'svg');
-    svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
-    return svg;
-  }
-  // Fondo de corazones concéntricos como la intro de la serie:
-  // salen del centro y se expanden hacia afuera sin parar
-  function buildRings(id){
+  // Fondo de corazones concéntricos como la intro de la serie, dibujado en <canvas>.
+  // (Antes eran SVG animados y Chrome del celular los renderizaba con cuadrados y cortes.)
+  const heartPath = new Path2D(HEART_PATH);
+  const rings = {};
+  function setupRings(id){
     const box = document.getElementById(id);
-    box.textContent = '';
-    const w = box.clientWidth || innerWidth, h = box.clientHeight || innerHeight;
-    let cy = h * 0.46;
-    if(id === 'coverRings'){
-      cy = h * 0.44;
-      const gr = document.getElementById('coverGirls').getBoundingClientRect();
-      if(gr.height > 40) cy = gr.top + gr.height/2;   // centrado detrás de las chicas
+    let r = rings[id];
+    if(!r){
+      const canvas = document.createElement('canvas');
+      box.textContent = '';
+      box.appendChild(canvas);
+      r = rings[id] = { box, canvas, ctx: canvas.getContext('2d'), on:false, vis:true };
+      if('IntersectionObserver' in window){
+        new IntersectionObserver(es=>{ r.vis = es[es.length-1].isIntersecting; }).observe(box);
+      }
     }
-    const cx = w/2;
-    const svg = newSvg(); box.appendChild(svg);
+    const w = box.clientWidth || innerWidth, h = box.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    r.canvas.width = Math.round(w * dpr); r.canvas.height = Math.round(h * dpr);
+    r.dpr = dpr; r.w = w; r.h = h; r.cx = w / 2;
+    let cy = h * (id === 'coverRings' ? 0.44 : 0.46);
+    if(id === 'coverRings'){
+      const gr = document.getElementById('coverGirls').getBoundingClientRect();
+      if(gr.height > 40) cy = gr.top + gr.height / 2;   // centrado detrás de las chicas
+    }
+    r.cy = cy;
     const big = Math.max(w, h);
-    const step = big * 0.15;
-    const N = Math.ceil(big * 1.9 / step) + 1;
-    for(let k=N; k>=-3; k--){
-      const { pos, sc } = heartGroup(cx, cy, RING_COLORS[((k % 3) + 3) % 3], step);
-      svg.appendChild(pos);
-      const from = k + 1, to = k + 4;
-      if(reduce){ sc.style.transform = 'scale(' + Math.max(0, from) + ')'; continue; }
-      const frames = from >= 0
-        ? [{ transform:'scale(' + from + ')' }, { transform:'scale(' + to + ')' }]
-        : [{ transform:'scale(0)', offset:0 }, { transform:'scale(0)', offset:-from/3 }, { transform:'scale(' + to + ')', offset:1 }];
-      sc.animate(frames, { duration:3600, iterations:Infinity, easing:'linear' });
+    r.step = big * 0.15;
+    r.N = Math.ceil(big * 1.9 / r.step) + 1;
+    drawRings(r, 0);
+    return r;
+  }
+  function drawRings(r, t){
+    const ctx = r.ctx, dpr = r.dpr;
+    const u = reduce ? 0 : ((t % 3600) / 3600) * 3;   // cada corazón avanza 3 lugares por ciclo
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, r.canvas.width, r.canvas.height);
+    for(let k = r.N; k >= -3; k--){
+      const sc = k + 1 + u;
+      if(sc <= 0.001) continue;
+      const a = dpr * sc * r.step / 36;
+      ctx.fillStyle = RING_COLORS[((k % 3) + 3) % 3];
+      ctx.setTransform(a, 0, 0, a, dpr * r.cx - 16 * a, dpr * r.cy - 14.5 * a);
+      ctx.fill(heartPath);
     }
   }
-  buildRings('coverRings');
+  function ringsLoop(now){
+    if(!document.hidden){
+      for(const id in rings){
+        const r = rings[id];
+        if(r.on && r.vis) drawRings(r, now);
+      }
+    }
+    requestAnimationFrame(ringsLoop);
+  }
+  setupRings('coverRings').on = true;
+  if(!reduce) requestAnimationFrame(ringsLoop);
   // Cuando carga la imagen de las chicas, se vuelve a centrar el fondo detrás de ellas
-  document.querySelector('#coverGirls img').addEventListener('load', ()=> buildRings('coverRings'));
+  document.querySelector('#coverGirls img').addEventListener('load', ()=> setupRings('coverRings'));
   let rt, lastW = innerWidth, lastH = innerHeight;
   addEventListener('resize', ()=>{
     clearTimeout(rt);
@@ -644,7 +648,7 @@
       // La barra del navegador del celular al scrollear cambia un poco el alto: se ignora
       if(Math.abs(innerWidth - lastW) < 2 && Math.abs(innerHeight - lastH) < 150) return;
       lastW = innerWidth; lastH = innerHeight;
-      buildRings(opened ? 'portadaRings' : 'coverRings');
+      setupRings(opened ? 'portadaRings' : 'coverRings');
     }, 250);
   });
   function heartEl(color, size){
@@ -722,7 +726,8 @@
     if(opened) return; opened = true;
     playMusic();   // arranca con el toque del corazón (los navegadores lo exigen)
     const finish = ()=>{
-      buildRings('portadaRings');
+      setupRings('portadaRings').on = true;
+      rings.coverRings.on = false;
       cover.style.display = 'none';
       document.body.classList.remove('locked');
       flybar.classList.add('show');
@@ -740,18 +745,30 @@
     cover.classList.add('opening');
     burst(cx, cy);
 
-    // Corazones concéntricos que crecen desde el corazón tocado y tapan la pantalla
+    // Corazones concéntricos que crecen desde el corazón tocado y tapan la pantalla (canvas)
     const wipe = document.createElement('div'); wipe.id = 'wipe';
     document.body.appendChild(wipe);
-    const wsvg = newSvg(); wipe.appendChild(wsvg);
+    const wc = document.createElement('canvas'); wipe.appendChild(wc);
+    const wdpr = Math.min(window.devicePixelRatio || 1, 2);
+    wc.width = Math.round(innerWidth * wdpr); wc.height = Math.round(innerHeight * wdpr);
+    const wctx = wc.getContext('2d');
     const far = Math.hypot(Math.max(cx, innerWidth-cx), Math.max(cy, innerHeight-cy));
-    const maxW = far * 4.4, N = 6;
-    for(let k=0;k<N;k++){
-      const { pos, sc } = heartGroup(cx, cy, RING_COLORS[k % RING_COLORS.length], maxW * (N-k)/N);
-      sc.style.transform = 'scale(0)';
-      wsvg.appendChild(pos);
-      sc.animate([{ transform:'scale(0)' }, { transform:'scale(1)' }], { duration:900, delay:k*110, easing:'cubic-bezier(.5,.05,.85,.4)', fill:'forwards' });
+    const maxW = far * 4.4, N = 6, DUR = 900, DELAY = 110, t0 = performance.now();
+    function wipeFrame(now){
+      const el = now - t0;
+      wctx.setTransform(1, 0, 0, 1, 0, 0);
+      wctx.clearRect(0, 0, wc.width, wc.height);
+      for(let k = 0; k < N; k++){
+        const p = Math.min(1, Math.max(0, (el - k * DELAY) / DUR));
+        if(p <= 0) continue;
+        const a = wdpr * (maxW * (N - k) / N) * Math.pow(p, 2.4) / 36;
+        wctx.fillStyle = RING_COLORS[k % RING_COLORS.length];
+        wctx.setTransform(a, 0, 0, a, wdpr * cx - 16 * a, wdpr * cy - 14.5 * a);
+        wctx.fill(heartPath);
+      }
+      if(el < DUR + (N - 1) * DELAY + 150) requestAnimationFrame(wipeFrame);
     }
+    requestAnimationFrame(wipeFrame);
     setTimeout(()=>{
       finish();
       wipe.animate([{opacity:1},{opacity:0}], { duration:800, easing:'ease-out', fill:'forwards' }).onfinish = ()=> wipe.remove();
